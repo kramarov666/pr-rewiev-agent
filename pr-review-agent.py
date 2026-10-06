@@ -1,9 +1,13 @@
 from pathlib import Path
+import os
 
+import requests
 from openai import OpenAI
+
 
 client = OpenAI()
 
+#huy
 
 def read_pr_context():
     context = []
@@ -38,3 +42,21 @@ Context:
         temperature=0.2,
     )
     return response.choices[0].message.content
+
+
+if __name__ == "__main__":
+    context = read_pr_context()
+    review = review_pull_request(context)
+    repo = os.environ["REPO"]
+    pr_number = os.environ["PR_NUMBER"]
+    token = os.environ["GH_TOKEN"]
+    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    headers = {"Authorization": f"Bearer {token}"}
+    result = requests.post(
+        url,
+        headers=headers,
+        json={"body": f"AI Review\nSummary:\n\n{review}"},
+    )
+    print("GitHub response status:", result.status_code)
+    print(result.text)
+    print(review)
